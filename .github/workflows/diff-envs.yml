@@ -1,0 +1,60 @@
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+name: Diff GitOps Environments
+
+jobs:
+  diff-env:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout PR
+        uses: actions/checkout@v3
+        with:
+         path: pr
+      - name: Checkout Target of PR
+        uses: actions/checkout@v3
+        with:
+          path: target
+          ref: ${{ github.event.pull_request.base.ref }}
+
+#       - run: |
+#            ls -la
+#            ls -la pr
+#            ls -la target
+#       - run: diff pr/envs/qa/settings.yml target/envs/qa/settings.yml > changes2.diff || true
+      - run: |
+           curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"  | bash
+           kustomize build pr/envs/qa/ > qa-pr.yml
+           kustomize build target/envs/qa/ > qa-target.yml
+           diff -U 7 qa-pr.yml qa-target.yml > qa-changes.diff || true
+           kustomize build pr/envs/prod/ > prod-pr.yml
+           kustomize build target/envs/prod/ > prod-target.yml
+           diff -U 7 prod-pr.yml prod-target.yml > prod-changes.diff || true
+           kustomize build pr/envs/staging/ > staging-pr.yml
+           kustomize build target/envs/staging/ > staging-target.yml
+           diff -U 7 staging-pr.yml staging-target.yml > staging-changes.diff || true
+      - run: |
+          wget https://raw.githubusercontent.com/kostis-codefresh/kustomize-github-preview-diff/main/pr-comment-template.txt
+          sed  's/DESCRIPTION_HERE/QA-Changes/g' pr-comment-template.txt > qa-diff.txt
+          sed  -e "/DIFF_HERE/{r qa-changes.diff" -e "d}" qa-diff.txt > qa-result.txt
+          sed  's/DESCRIPTION_HERE/Staging-Changes/g' pr-comment-template.txt > staging-diff.txt
+          sed  -e "/DIFF_HERE/{r staging-changes.diff" -e "d}" staging-diff.txt > staging-result.txt
+          sed  's/DESCRIPTION_HERE/Prod-Changes/g' pr-comment-template.txt > prod-diff.txt
+          sed  -e "/DIFF_HERE/{r prod-changes.diff" -e "d}" prod-diff.txt > prod-result.txt
+          cat qa-result.txt staging-result.txt prod-result.txt > comment.txt
+
+
+
+      - name: comment PR
+        uses: machine-learning-apps/pr-comment@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          path: comment.txt

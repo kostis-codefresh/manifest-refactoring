@@ -24,4 +24,7 @@ spec:
         env:
         - name: REGION
           value: "us"
+        envFrom:
+        - configMapRef:
+            name: example-configmap  
 

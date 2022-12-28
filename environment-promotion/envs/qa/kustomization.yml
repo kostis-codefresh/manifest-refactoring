@@ -13,7 +13,6 @@ components:
 patchesStrategicMerge:
 - deployment.yml
 - version.yml
-- settings.yml
 - service.yml
 
 configMapGenerator:

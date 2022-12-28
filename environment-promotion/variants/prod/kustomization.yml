@@ -4,3 +4,7 @@ kind: Component
 patchesStrategicMerge:
 - prod.yml
 
+configMapGenerator:
+- name: example-configmap
+  envs:
+  - application.properties

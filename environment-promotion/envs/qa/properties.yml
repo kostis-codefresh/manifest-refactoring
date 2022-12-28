@@ -1,0 +1,7 @@
+apiVersion: v1
+data:
+  application.properties: |
+        QA=TRUE
+kind: ConfigMap
+metadata:
+  name: example-configmap

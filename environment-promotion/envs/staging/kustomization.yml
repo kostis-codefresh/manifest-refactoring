@@ -16,4 +16,9 @@ patchesStrategicMerge:
 - replicas.yml
 - settings.yml
 - service.yml
-- properties.yml
+
+configMapGenerator:
+- name: example-configmap
+  behavior: merge
+  envs:
+  - application.properties

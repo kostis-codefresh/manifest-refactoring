@@ -1,7 +1,0 @@
-apiVersion: v1
-data:
-  application.properties: |
-        STAGING=TRUE
-kind: ConfigMap
-metadata:
-  name: example-configmap
